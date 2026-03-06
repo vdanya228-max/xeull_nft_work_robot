@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 
 # Загрузка переменных окружения
 load_dotenv()
@@ -25,9 +25,17 @@ main_menu_keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="Выдать звезды на передачу")],
         [KeyboardButton(text="Создать сыллку"), KeyboardButton(text="Подключится к сессии")],
-        [KeyboardButton(text="Ваши логи")]
+        [KeyboardButton(text="Ваши логи"), KeyboardButton(text="Приобрести подписку")]
     ],
     resize_keyboard=True
+)
+
+# Кнопки для выбора подписки
+subscription_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="Подписка на неделю", callback_data="subscribe_week")],
+        [InlineKeyboardButton(text="Подписка на месяц", callback_data="subscribe_month")]
+    ]
 )
 
 @dp.message(CommandStart())
@@ -35,7 +43,56 @@ async def command_start_handler(message: Message) -> None:
     """
     Обработка команды /start
     """
-    await message.answer("Привет введи код которые тебе выдали при покупке")
+    await message.answer("Привет введи код которые тебе выдали при покупке", reply_markup=main_menu_keyboard)
+
+@dp.message(F.text == "Приобрести подписку")
+async def subscribe_handler(message: Message):
+    await message.answer("Выберите период подписки:", reply_markup=subscription_keyboard)
+
+@dp.callback_query(F.data == "subscribe_week")
+async def process_subscribe_week(callback: CallbackQuery):
+    payment_info = (
+        "После оплаты вы получите персональный ключ подписки, который активирует доступ ко всем функциям сервиса на выбранный срок. "
+        "Ключ выдается сразу после успешной оплаты и позволяет начать пользоваться сервисом без ожидания. "
+        "Спасибо за вашу покупку и доверие!"
+    )
+    payment_keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="Оплатить", url="t.me/send?start=IVaKicb1xSdb")]]
+    )
+    await callback.message.answer(payment_info, reply_markup=payment_keyboard)
+    await callback.answer()
+
+@dp.callback_query(F.data == "subscribe_month")
+async def process_subscribe_month(callback: CallbackQuery):
+    payment_info = (
+        "После оплаты вы получите персональный ключ подписки, который активирует доступ ко всем функциям сервиса на выбранный срок. "
+        "Ключ выдается сразу после успешной оплаты и позволяет начать пользоваться сервисом без ожидания. "
+        "Спасибо за вашу покупку и доверие!"
+    )
+    payment_keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="Оплатить", url="t.me/send?start=IV5cWEdhWa1Z")]]
+    )
+    await callback.message.answer(payment_info, reply_markup=payment_keyboard)
+    await callback.answer()
+
+@dp.message(F.text.in_({"xeull_work#122026", "xeull_work#202612"}))
+async def process_activation_keys(message: Message):
+    if message.text == "xeull_work#122026":
+        duration = 7
+    else:
+        duration = 30
+    
+    activated_users.add(message.from_user.id)
+    await message.answer(f"Поздравляем! Вы успешно активировали подписку на {duration} дней.")
+    
+    # Здесь можно добавить логику для обновления статуса пользователя в базе данных
+    status_text = (
+        f"Привет {message.from_user.first_name}\n"
+        f"Подписка: Активирована (осталось {duration} дней)\n"
+        "Баланс: 0 Ton\n"
+        "профит: 0 Ton"
+    )
+    await message.answer(status_text, reply_markup=main_menu_keyboard)
 
 @dp.message(F.text == "xeull_test")
 async def process_test_code(message: Message) -> None:
@@ -59,6 +116,10 @@ async def process_menu_buttons(message: Message) -> None:
     """
     Обработка кнопок меню
     """
+    if message.from_user.id in activated_users:
+        await message.answer("Эта функция доступна только после активации подписки.")
+        return
+        
     error_text = (
         "у вас не активирована подписка и вы не добавлены в вайт лист\n\n"
         "для покупки полной версии обратитесь к @xeull_robot\n\n"
