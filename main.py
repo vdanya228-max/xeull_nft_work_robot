@@ -75,26 +75,19 @@ async def process_subscribe_month(callback: CallbackQuery):
     await callback.message.answer(payment_info, reply_markup=payment_keyboard)
     await callback.answer()
 
-@dp.message(F.text.in_({"xeull_work#122026", "xeull_work#202612"}))
+@dp.message(lambda message: message.text and message.text.strip().lower() in {"xeull_work#122026", "xeull_work#202612"})
 async def process_activation_keys(message: Message):
-    if message.text == "xeull_work#122026":
-        duration = 7
-    else:
-        duration = 30
-    
     activated_users.add(message.from_user.id)
-    await message.answer(f"Поздравляем! Вы успешно активировали подписку на {duration} дней.")
     
-    # Здесь можно добавить логику для обновления статуса пользователя в базе данных
-    status_text = (
-        f"Привет {message.from_user.first_name}\n"
-        f"Подписка: Активирована (осталось {duration} дней)\n"
-        "Баланс: 0 Ton\n"
-        "профит: 0 Ton"
+    activation_message = (
+        "✅ Ключ успешно активирован!\n\n"
+        "У вас активирована подписка, и вы добавлены в вайт лист.\n"
+        "Из-за текущей нагрузки на сервер полный функционал может стать доступен через несколько минут или часов.\n\n"
+        "Как только активация завершится, мы отправим вам уведомление. Спасибо за ожидание! 🚀"
     )
-    await message.answer(status_text, reply_markup=main_menu_keyboard)
+    await message.answer(activation_message, reply_markup=main_menu_keyboard)
 
-@dp.message(F.text == "xeull_test")
+@dp.message(lambda message: message.text and message.text.strip().lower() == "xeull_test")
 async def process_test_code(message: Message) -> None:
     """
     Обработка тестового кода
@@ -117,7 +110,8 @@ async def process_menu_buttons(message: Message) -> None:
     Обработка кнопок меню
     """
     if message.from_user.id in activated_users:
-        await message.answer("Эта функция доступна только после активации подписки.")
+        # TODO: Заменить этот текст на реальную логику для каждой кнопки
+        await message.answer("Функционал в разработке, но ваша подписка активна.")
         return
         
     error_text = (
