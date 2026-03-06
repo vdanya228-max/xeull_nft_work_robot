@@ -98,7 +98,7 @@ async def process_test_code(message: Message) -> None:
     # Отправляем статус пользователя
     status_text = (
         f"Привет {message.from_user.first_name}\n"
-        "Подписка: Не активирована\n"
+        "Подписка: Активирована (Тестовая)\n"
         "Баланс: 0 Ton\n"
         "профит: 0 Ton"
     )
@@ -110,8 +110,15 @@ async def process_menu_buttons(message: Message) -> None:
     Обработка кнопок меню
     """
     if message.from_user.id in activated_users:
-        # TODO: Заменить этот текст на реальную логику для каждой кнопки
-        await message.answer("Функционал в разработке, но ваша подписка активна.")
+        await message.answer("✅ Ваша подписка активна.\nДоступ к функциям настраивается, пожалуйста, подождите завершения активации.")
+        
+        status_text = (
+            f"Привет {message.from_user.first_name}\n"
+            "Подписка: Активирована\n"
+            "Баланс: 0 Ton\n"
+            "профит: 0 Ton"
+        )
+        await message.answer(status_text, reply_markup=main_menu_keyboard)
         return
         
     error_text = (
