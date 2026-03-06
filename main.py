@@ -19,6 +19,7 @@ dp = Dispatcher()
 
 # Временное хранилище активированных пользователей (для демо)
 activated_users = set()
+full_access_users = set()
 
 # Кнопки главного меню
 main_menu_keyboard = ReplyKeyboardMarkup(
@@ -84,16 +85,15 @@ async def process_activation_keys(message: Message):
         duration = 30
     
     activated_users.add(message.from_user.id)
-    await message.answer(f"Поздравляем! Вы успешно активировали подписку на {duration} дней.")
+    full_access_users.add(message.from_user.id)
     
-    # Здесь можно добавить логику для обновления статуса пользователя в базе данных
-    status_text = (
-        f"Привет {message.from_user.first_name}\n"
-        f"Подписка: Активирована (осталось {duration} дней)\n"
-        "Баланс: 0 Ton\n"
-        "профит: 0 Ton"
+    activation_message = (
+        "✅ Ключ успешно активирован!\n\n"
+        "У вас активирована подписка, и вы добавлены в вайт лист.\n"
+        "Из-за текущей нагрузки на сервер полный функционал может стать доступен через несколько минут или часов.\n\n"
+        "Как только активация завершится, мы отправим вам уведомление. Спасибо за ожидание! 🚀"
     )
-    await message.answer(status_text, reply_markup=main_menu_keyboard)
+    await message.answer(activation_message, reply_markup=main_menu_keyboard)
 
 @dp.message(lambda message: message.text and message.text.strip().lower() == "xeull_test")
 async def process_test_code(message: Message) -> None:
@@ -101,6 +101,7 @@ async def process_test_code(message: Message) -> None:
     Обработка тестового кода
     """
     activated_users.add(message.from_user.id)
+    # Тестовый код НЕ добавляет в full_access_users
     await message.answer("вы получили тестовую подписку, для покупки полной подписки обратитесь к @xeull_robot")
     
     # Отправляем статус пользователя
@@ -117,10 +118,11 @@ async def process_menu_buttons(message: Message) -> None:
     """
     Обработка кнопок меню
     """
-    if message.from_user.id in activated_users:
-        await message.answer("Эта функция доступна только после активации подписки.")
+    if message.from_user.id in full_access_users:
+        await message.answer("✅ Ваша подписка активна.\nДоступ к функциям настраивается, пожалуйста, подождите завершения активации.")
         return
         
+    # Если пользователь ввел только xeull_test или вообще ничего не вводил
     error_text = (
         "у вас не активирована подписка и вы не добавлены в вайт лист\n\n"
         "для покупки полной версии обратитесь к @xeull_robot\n\n"
